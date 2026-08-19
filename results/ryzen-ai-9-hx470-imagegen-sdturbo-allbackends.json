@@ -1,0 +1,34 @@
+{
+  "timestamp": "2026-08-19T23:37:15.675637+00:00",
+  "system": {
+    "cpu": "AMD Ryzen AI 9 HX 470 w/ Radeon 890M",
+    "memory": "64GB",
+    "gpu": "AMD Radeon(TM) 890M Graphics",
+    "npu": "AMD XDNA2 (ready)",
+    "os": "Windows 11 Pro 6.3 (Build 26200)"
+  },
+  "results": {
+    "image_gen": {
+      "SD-Turbo": {
+        "cpu": {
+          "value": 6.04,
+          "unit": "img/min",
+          "ttft_ms": 9935.32,
+          "memory_gb": 6.8
+        },
+        "vulkan": {
+          "value": 6.05,
+          "unit": "img/min",
+          "ttft_ms": 9911.44,
+          "memory_gb": 6.7
+        },
+        "rocm": {
+          "value": 6.07,
+          "unit": "img/min",
+          "ttft_ms": 9882.48,
+          "memory_gb": 6.7
+        }
+      }
+    }
+  }
+}
