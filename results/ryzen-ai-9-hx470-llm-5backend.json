@@ -1,0 +1,80 @@
+{
+  "timestamp": "2026-08-19T22:48:30.683574+00:00",
+  "system": {
+    "cpu": "AMD Ryzen AI 9 HX 470 w/ Radeon 890M",
+    "memory": "64GB",
+    "gpu": "AMD Radeon(TM) 890M Graphics",
+    "npu": "AMD XDNA2 (ready)",
+    "os": "Windows 11 Pro 6.3 (Build 26200)"
+  },
+  "results": {
+    "llm": {
+      "Llama-3.2-1B-Instruct": {
+        "cpu": {
+          "value": 76.56,
+          "unit": "tok/s",
+          "ttft_ms": 146.74,
+          "memory_gb": 9.0
+        },
+        "vulkan": {
+          "value": 85.71,
+          "unit": "tok/s",
+          "ttft_ms": 42.13,
+          "memory_gb": 8.8
+        },
+        "rocm": {
+          "value": 77.03,
+          "unit": "tok/s",
+          "ttft_ms": 54.04,
+          "memory_gb": 8.4
+        },
+        "npu": {
+          "value": 41.15,
+          "unit": "tok/s",
+          "ttft_ms": 254.0,
+          "memory_gb": 10.7
+        },
+        "hybrid": {
+          "value": 52.42,
+          "unit": "tok/s",
+          "ttft_ms": 183.75,
+          "memory_gb": 10.0
+        }
+      }
+    }
+  },
+  "models": {
+    "Llama-3.2-1B-Instruct": {
+      "cpu": {
+        "value": 76.56,
+        "unit": "tok/s",
+        "ttft_ms": 146.74,
+        "memory_gb": 9.0
+      },
+      "vulkan": {
+        "value": 85.71,
+        "unit": "tok/s",
+        "ttft_ms": 42.13,
+        "memory_gb": 8.8
+      },
+      "rocm": {
+        "value": 77.03,
+        "unit": "tok/s",
+        "ttft_ms": 54.04,
+        "memory_gb": 8.4
+      },
+      "npu": {
+        "value": 41.15,
+        "unit": "tok/s",
+        "ttft_ms": 254.0,
+        "memory_gb": 10.7
+      },
+      "hybrid": {
+        "value": 52.42,
+        "unit": "tok/s",
+        "ttft_ms": 183.75,
+        "memory_gb": 10.0
+      }
+    }
+  }
+}

@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AMD AI Benchmarks — Community Ryzen AI Leaderboard</title>
+<meta name="description" content="Community-submitted local AI benchmark results for AMD Ryzen AI PCs — CPU, Vulkan, ROCm, NPU, and Hybrid, side by side.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>AMD AI Benchmarks</h1>
+    <nav>
+      <a href="https://github.com/skywalk1411/amdaibenchmarks">This repo</a>
+      <a href="https://github.com/skywalk1411/lemonade_lab">lemonade_lab</a>
+    </nav>
+  </header>
+  <p class="tagline">
+    Community-submitted local AI benchmark results for AMD Ryzen AI PCs — CPU,
+    Vulkan, ROCm, NPU, and Hybrid, side by side. Every row here comes from a real
+    <code>report_*.json</code> submitted by pull request; see
+    <a href="https://github.com/skywalk1411/amdaibenchmarks#contributing">how to add yours</a>.
+  </p>
+
+  <div class="stat-row" id="statRow"></div>
+
+  <div class="filter-row">
+    <select id="workloadSelect"></select>
+    <select id="modelSelect"></select>
+    <span class="count" id="countLabel"></span>
+  </div>
+
+  <div id="content"></div>
+
+  <details style="margin-top:32px;">
+    <summary style="cursor:pointer; font-size:12px; color:var(--text-secondary);">All submissions</summary>
+    <div class="reports-table-wrap" style="margin-top:12px;">
+      <table class="data-table" id="reportsTable">
+        <thead><tr><th>Submitted</th><th>CPU</th><th>GPU</th><th>NPU</th><th>Memory</th><th>File</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </details>
+
+  <div class="cta">
+    <strong>Have an AMD Ryzen AI PC?</strong> Run
+    <a href="https://github.com/skywalk1411/lemonade_lab">lemonade_lab</a> against
+    your hardware (<code>python -m bench.cli</code>), then open a pull request
+    adding the resulting <code>report_*.json</code> to <code>results/</code> in
+    <a href="https://github.com/skywalk1411/amdaibenchmarks">this repo</a>. A GitHub
+    Action validates the schema automatically, and the leaderboard rebuilds on merge.
+  </div>
+
+  <footer>AMD AI Benchmarks — built on <a href="https://lemonade-server.ai">Lemonade Server</a></footer>
+</div>
+
+<script>
+const BACKEND_META = {
+  rocm:   { label: "ROCm",   color: "var(--series-rocm)" },
+  vulkan: { label: "Vulkan", color: "var(--series-vulkan)" },
+  hybrid: { label: "Hybrid", color: "var(--series-hybrid)" },
+  npu:    { label: "NPU",    color: "var(--series-npu)" },
+  cpu:    { label: "CPU",    color: "var(--series-cpu)" },
+};
+const WORKLOAD_LABELS = {
+  llm: "LLM Generation",
+  embedding: "Embedding Throughput",
+  image_gen: "Image Generation",
+};
+
+const workloadSelect = document.getElementById("workloadSelect");
+const modelSelect = document.getElementById("modelSelect");
+const content = document.getElementById("content");
+const countLabel = document.getElementById("countLabel");
+const statRow = document.getElementById("statRow");
+
+let allRows = [];
+let catalog = {};
+
+async function getJSON(path) {
+  const res = await fetch(path);
+  if (!res.ok) throw new Error(`${path} -> ${res.status}`);
+  return res.json();
+}
+
+function fmtValue(v, unit) {
+  return v.toFixed(1) + " " + (unit || "tok/s");
+}
+
+function renderStats(rows, reports) {
+  const machines = new Set(reports.map(r => r.cpu).filter(Boolean));
+  const workloads = new Set(rows.map(r => r.workload));
+  const stats = [
+    ["Submissions", reports.length],
+    ["Machines", machines.size],
+    ["Workloads", workloads.size],
+    ["Result rows", rows.length],
+  ];
+  statRow.innerHTML = stats.map(([label, value]) =>
+    `<div class="stat-tile"><div class="label">${label}</div><div class="value">${value}</div></div>`
+  ).join("");
+}
+
+function populateFilters() {
+  const workloads = [...new Set(allRows.map(r => r.workload))];
+  workloadSelect.innerHTML = workloads.map(w => `<option value="${w}">${WORKLOAD_LABELS[w] || w}</option>`).join("");
+  populateModelOptions();
+}
+
+function populateModelOptions() {
+  const workload = workloadSelect.value;
+  const models = [...new Set(allRows.filter(r => r.workload === workload).map(r => r.model))].sort();
+  modelSelect.innerHTML = `<option value="">All models</option>` + models.map(m => `<option value="${m}">${m}</option>`).join("");
+}
+
+function renderLeaderboard() {
+  const workload = workloadSelect.value;
+  const model = modelSelect.value;
+  const rows = allRows.filter(r => r.workload === workload && (!model || r.model === model));
+
+  countLabel.textContent = rows.length === 1 ? "1 result" : `${rows.length} results`;
+
+  if (rows.length === 0) {
+    content.innerHTML = `<div class="empty-state">No results for this filter yet.</div>`;
+    return;
+  }
+
+  const maxValue = Math.max(...rows.map(r => r.value));
+  const card = document.createElement("div");
+  card.className = "model-card";
+
+  const legendBackends = [...new Set(rows.map(r => r.backend))];
+  const legend = legendBackends.map(b =>
+    `<div class="legend-item"><span class="legend-swatch" style="background:${BACKEND_META[b]?.color || '#888'}"></span>${BACKEND_META[b]?.label || b}</div>`
+  ).join("");
+
+  const rankRows = rows.map((r, i) => {
+    const meta = BACKEND_META[r.backend] || { label: r.backend, color: "#888" };
+    const pct = Math.max(3, (r.value / maxValue) * 100);
+    return `
+      <div class="rank-row">
+        <div class="rank">${i + 1}</div>
+        <div class="who">
+          <div class="machine"><span class="swatch" style="background:${meta.color}"></span>${r.cpu || "Unknown CPU"} — ${meta.label}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${pct}%; background:${meta.color}"></div></div>
+        </div>
+        <div class="value">${fmtValue(r.value, r.unit)}</div>
+      </div>`;
+  }).join("");
+
+  card.innerHTML = `
+    <h2>${WORKLOAD_LABELS[workload] || workload}${model ? " — " + model : ""}</h2>
+    <div class="legend">${legend}</div>
+    ${rankRows}
+  `;
+  content.innerHTML = "";
+  content.appendChild(card);
+}
+
+function renderReportsTable(reports) {
+  const tbody = document.querySelector("#reportsTable tbody");
+  tbody.innerHTML = reports.map(r => `
+    <tr>
+      <td>${r.timestamp ? r.timestamp.slice(0, 10) : "—"}</td>
+      <td>${r.cpu || "—"}</td>
+      <td>${r.gpu || "—"}</td>
+      <td>${r.npu || "—"}</td>
+      <td>${r.memory || "—"}</td>
+      <td><a href="https://github.com/skywalk1411/amdaibenchmarks/blob/main/results/${r.file}">${r.file}</a></td>
+    </tr>
+  `).join("");
+}
+
+async function init() {
+  try {
+    const [rows, reports] = await Promise.all([
+      getJSON("data/leaderboard.json"),
+      getJSON("data/reports.json"),
+    ]);
+    allRows = rows;
+
+    if (rows.length === 0) {
+      content.innerHTML = `<div class="empty-state">No benchmark reports have been submitted yet — be the first!</div>`;
+      workloadSelect.style.display = "none";
+      modelSelect.style.display = "none";
+    } else {
+      populateFilters();
+      renderLeaderboard();
+    }
+    renderStats(rows, reports);
+    renderReportsTable(reports);
+  } catch (err) {
+    content.innerHTML = `<div class="empty-state">Couldn't load leaderboard data: ${err.message}</div>`;
+  }
+}
+
+workloadSelect.addEventListener("change", () => { populateModelOptions(); renderLeaderboard(); });
+modelSelect.addEventListener("change", renderLeaderboard);
+
+init();
+</script>
+</body>
+</html>
