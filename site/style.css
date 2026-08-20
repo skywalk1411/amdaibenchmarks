@@ -95,9 +95,37 @@ header.top nav a:hover { color: var(--text-primary); background: var(--surface-1
 .rank-row .who { display: flex; flex-direction: column; gap: 4px; }
 .rank-row .who .machine { font-size: 13px; font-weight: 600; }
 .rank-row .who .machine .swatch { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; }
+.rank-row .who .byline { font-size: 11px; color: var(--text-muted); font-weight: 400; display: flex; align-items: center; gap: 8px; }
+.rank-row .who .byline a { color: inherit; text-decoration: none; }
+.rank-row .who .byline a:hover { color: var(--series-rocm); }
 .rank-row .bar-track { position: relative; height: 18px; background: var(--page-plane); border-radius: 4px; }
 .rank-row .bar-fill { position: absolute; left: 0; top: 0; height: 100%; border-radius: 4px; min-width: 3px; }
 .rank-row .value { font-size: 13px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+
+.settings-btn {
+  font: inherit; font-size: 11px; color: var(--text-muted); background: none;
+  border: 1px solid var(--border); border-radius: 5px; padding: 1px 7px; cursor: pointer;
+  font-family: inherit;
+}
+.settings-btn:hover { color: var(--text-primary); border-color: var(--text-muted); }
+.settings-panel {
+  grid-column: 1 / -1; margin: 4px 0 0; padding: 10px 12px; background: var(--page-plane);
+  border: 1px solid var(--border); border-radius: 8px; font-size: 11px; position: relative;
+  white-space: normal; max-width: 360px;
+}
+.settings-panel pre { margin: 0; white-space: pre-wrap; word-break: break-word; color: var(--text-secondary); }
+.settings-panel .copy-btn {
+  position: absolute; top: 8px; right: 10px; font: inherit; font-size: 11px; color: var(--text-secondary);
+  background: var(--surface-1); border: 1px solid var(--border); border-radius: 5px; padding: 2px 8px; cursor: pointer;
+}
+.settings-panel .copy-btn:hover { color: var(--text-primary); }
+
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(8px);
+  background: var(--text-primary); color: var(--surface-1); font-size: 12px; padding: 8px 16px;
+  border-radius: 8px; opacity: 0; pointer-events: none; transition: opacity 0.15s, transform 0.15s; z-index: 10;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 .empty-state { text-align: center; padding: 48px 20px; color: var(--text-secondary); }
 .empty-state code { background: var(--surface-1); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); }

@@ -43,6 +43,8 @@ def build():
             "npu": system.get("npu"),
             "memory": system.get("memory"),
             "os": system.get("os"),
+            "submitted_by": report.get("submitted_by"),
+            "settings": report.get("settings"),
         })
 
         for workload, models in _results_view(report).items():
@@ -64,6 +66,8 @@ def build():
                         "npu": system.get("npu"),
                         "memory": system.get("memory"),
                         "timestamp": report.get("timestamp"),
+                        "submitted_by": report.get("submitted_by"),
+                        "settings": report.get("settings"),
                     })
 
     leaderboard_rows.sort(key=lambda r: r["value"], reverse=True)

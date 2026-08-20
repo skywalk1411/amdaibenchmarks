@@ -59,6 +59,14 @@ def validate_report(data: dict) -> list[str]:
     else:
         warnings.append("no top-level 'timestamp' — submission order will be used instead")
 
+    submitted_by = data.get("submitted_by")
+    if submitted_by is not None and not (isinstance(submitted_by, str) and submitted_by.strip()):
+        warnings.append("'submitted_by' should be a non-empty string (a GitHub username) if present — ignoring it")
+
+    settings = data.get("settings")
+    if settings is not None and not isinstance(settings, dict):
+        warnings.append("'settings' should be an object if present — ignoring it")
+
     results = data.get("results")
     if not isinstance(results, dict) or not results:
         # fall back to the flat back-compat 'models' alias (llm workload only)

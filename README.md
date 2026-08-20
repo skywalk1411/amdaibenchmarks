@@ -14,6 +14,13 @@ each submission's schema; on merge, another Action rebuilds the static
 leaderboard site and deploys it to GitHub Pages. That's the whole system —
 reviewable in the open, no infrastructure to run or trust.
 
+Each report can optionally carry `submitted_by` (a GitHub username, credited
+on the site next to that result) and `settings` (the exact `bench.cli`
+invocation — runs, warmup, timeout, backends — that produced it). The site
+shows both: the submitter's handle links to their GitHub profile, and a
+"⚙ settings" toggle next to each result lets you view or copy the raw JSON
+settings that were used.
+
 The reports come from [lemonade_lab](https://github.com/skywalk1411/lemonade_lab),
 a benchmarking CLI built on [Lemonade Server](https://lemonade-server.ai) that
 runs the same models across every backend your Ryzen AI hardware exposes and

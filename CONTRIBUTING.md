@@ -11,6 +11,12 @@
    backends as your hardware supports (CPU, Vulkan, ROCm, NPU, Hybrid) for the
    most useful comparison — `python -m bench.cli --backends cpu vulkan rocm npu hybrid`.
 
+   Or skip steps 2-4 below and let `lemonade_lab` do them for you:
+   `python -m bench.cli --submit` clones/validates/commits/pushes a
+   `submit/<slug>` branch to this repo and prints a compare URL to open the
+   PR from — see its README for details, including how it credits your
+   GitHub username via `submitted_by`.
+
 2. Copy that file into `results/` in this repo. Rename it to something
    descriptive: `<cpu-model>-<what-it-covers>.json`, e.g.
    `ryzen-ai-9-hx370-llm-vulkan-npu.json`. Lowercase, hyphens, no spaces.
@@ -46,3 +52,16 @@ a `system` object (cpu/memory/gpu/npu/os) and a `results` object keyed by
 workload (`llm`, `embedding`, `image_gen`), then model name, then backend,
 each holding `{value, unit, ttft_ms, memory_gb}` or `{error}`. Other tools
 producing this exact shape are welcome too.
+
+Two optional top-level fields the site knows how to display:
+
+- `submitted_by` — your GitHub username, credited on the leaderboard next to
+  your results (linked to your profile). `lemonade_lab --submit` fills this
+  in automatically (see its README); if you're submitting by hand, feel free
+  to add it yourself.
+- `settings` — the benchmark run's own settings (e.g. `runs`, `warmup`,
+  `timeout`, `backends`), shown behind a "⚙ settings" toggle on each result so
+  others can see (and copy) exactly what produced a given number.
+
+Neither field is required — `scripts/validate.py` only warns if they're
+present but malformed, it won't reject a submission that omits them.

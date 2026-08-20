@@ -37,11 +37,13 @@
     <summary style="cursor:pointer; font-size:12px; color:var(--text-secondary);">All submissions</summary>
     <div class="reports-table-wrap" style="margin-top:12px;">
       <table class="data-table" id="reportsTable">
-        <thead><tr><th>Submitted</th><th>CPU</th><th>GPU</th><th>NPU</th><th>Memory</th><th>File</th></tr></thead>
+        <thead><tr><th>Submitted</th><th>By</th><th>CPU</th><th>GPU</th><th>NPU</th><th>Memory</th><th>Settings</th><th>File</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
   </details>
+
+  <div class="toast" id="toast"></div>
 
   <div class="cta">
     <strong>Have an AMD Ryzen AI PC?</strong> Run
@@ -87,6 +89,71 @@ async function getJSON(path) {
 function fmtValue(v, unit) {
   return v.toFixed(1) + " " + (unit || "tok/s");
 }
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+// GitHub logins are alnum + single hyphens, 1-39 chars — reject anything else
+// rather than build a link/URL out of untrusted submitted_by data.
+function isPlausibleGithubUsername(s) {
+  return typeof s === "string" && /^[a-zA-Z\d](?:[a-zA-Z\d]|-(?=[a-zA-Z\d])){0,38}$/.test(s);
+}
+
+function submittedByHtml(submittedBy) {
+  if (!isPlausibleGithubUsername(submittedBy)) return "";
+  const safe = escapeHtml(submittedBy);
+  return `<a href="https://github.com/${safe}" target="_blank" rel="noopener noreferrer">@${safe}</a>`;
+}
+
+let settingsStore = {};
+let settingsSeq = 0;
+
+// Returns {button, panel} HTML for a settings object, or {button:"",panel:""}
+// if there's nothing to show. Caller places `button` inline and `panel`
+// wherever the toggled JSON view should render.
+function settingsWidgetHtml(settings) {
+  if (!settings || typeof settings !== "object") return { button: "", panel: "" };
+  const id = "settings-" + (settingsSeq++);
+  settingsStore[id] = settings;
+  const json = escapeHtml(JSON.stringify(settings, null, 2));
+  return {
+    button: `<button type="button" class="settings-btn" data-settings-toggle="${id}">⚙ settings</button>`,
+    panel: `<div class="settings-panel" id="panel-${id}" hidden>
+      <button type="button" class="copy-btn" data-settings-copy="${id}">Copy</button>
+      <pre>${json}</pre>
+    </div>`,
+  };
+}
+
+function showToast(msg) {
+  const toast = document.getElementById("toast");
+  toast.textContent = msg;
+  toast.classList.add("show");
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => toast.classList.remove("show"), 1600);
+}
+
+document.addEventListener("click", async (e) => {
+  const toggleBtn = e.target.closest("[data-settings-toggle]");
+  if (toggleBtn) {
+    const id = toggleBtn.dataset.settingsToggle;
+    const panel = document.getElementById(`panel-${id}`);
+    if (panel) panel.hidden = !panel.hidden;
+    return;
+  }
+  const copyBtn = e.target.closest("[data-settings-copy]");
+  if (copyBtn) {
+    const id = copyBtn.dataset.settingsCopy;
+    const text = JSON.stringify(settingsStore[id], null, 2);
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast("Settings copied to clipboard");
+    } catch {
+      showToast("Couldn't copy — select the text manually");
+    }
+  }
+});
 
 function renderStats(rows, reports) {
   const machines = new Set(reports.map(r => r.cpu).filter(Boolean));
@@ -138,14 +205,20 @@ function renderLeaderboard() {
   const rankRows = rows.map((r, i) => {
     const meta = BACKEND_META[r.backend] || { label: r.backend, color: "#888" };
     const pct = Math.max(3, (r.value / maxValue) * 100);
+    const byLink = submittedByHtml(r.submitted_by);
+    const widget = settingsWidgetHtml(r.settings);
+    const bylineParts = [byLink && `by ${byLink}`, widget.button].filter(Boolean);
+    const byline = bylineParts.length ? `<div class="byline">${bylineParts.join("")}</div>` : "";
     return `
       <div class="rank-row">
         <div class="rank">${i + 1}</div>
         <div class="who">
-          <div class="machine"><span class="swatch" style="background:${meta.color}"></span>${r.cpu || "Unknown CPU"} — ${meta.label}</div>
+          <div class="machine"><span class="swatch" style="background:${meta.color}"></span>${escapeHtml(r.cpu || "Unknown CPU")} — ${meta.label}</div>
+          ${byline}
           <div class="bar-track"><div class="bar-fill" style="width:${pct}%; background:${meta.color}"></div></div>
         </div>
         <div class="value">${fmtValue(r.value, r.unit)}</div>
+        ${widget.panel}
       </div>`;
   }).join("");
 
@@ -160,16 +233,20 @@ function renderLeaderboard() {
 
 function renderReportsTable(reports) {
   const tbody = document.querySelector("#reportsTable tbody");
-  tbody.innerHTML = reports.map(r => `
+  tbody.innerHTML = reports.map(r => {
+    const widget = settingsWidgetHtml(r.settings);
+    return `
     <tr>
       <td>${r.timestamp ? r.timestamp.slice(0, 10) : "—"}</td>
-      <td>${r.cpu || "—"}</td>
-      <td>${r.gpu || "—"}</td>
-      <td>${r.npu || "—"}</td>
-      <td>${r.memory || "—"}</td>
-      <td><a href="https://github.com/skywalk1411/amdaibenchmarks/blob/main/results/${r.file}">${r.file}</a></td>
-    </tr>
-  `).join("");
+      <td>${submittedByHtml(r.submitted_by) || "—"}</td>
+      <td>${escapeHtml(r.cpu || "—")}</td>
+      <td>${escapeHtml(r.gpu || "—")}</td>
+      <td>${escapeHtml(r.npu || "—")}</td>
+      <td>${escapeHtml(r.memory || "—")}</td>
+      <td>${widget.button || "—"}${widget.panel}</td>
+      <td><a href="https://github.com/skywalk1411/amdaibenchmarks/blob/main/results/${encodeURIComponent(r.file)}">${escapeHtml(r.file)}</a></td>
+    </tr>`;
+  }).join("");
 }
 
 async function init() {
