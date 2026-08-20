@@ -43,6 +43,13 @@
       }
     }
   },
+  "settings": {
+    "runs": 3,
+    "warmup": 1,
+    "timeout": 300,
+    "auto_pull": true,
+    "backends": "all"
+  },
   "models": {
     "Llama-3.2-1B-Instruct": {
       "cpu": {
@@ -76,5 +83,6 @@
         "memory_gb": 10.0
       }
     }
-  }
+  },
+  "submitted_by": "skywalk1411"
 }

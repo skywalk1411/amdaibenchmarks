@@ -37,6 +37,13 @@
       }
     }
   },
+  "settings": {
+    "runs": 3,
+    "warmup": 1,
+    "timeout": 300,
+    "auto_pull": true,
+    "backends": "all"
+  },
   "models": {
     "Qwen3.5-0.8B": {
       "cpu": {
@@ -64,5 +71,6 @@
         "memory_gb": 9.0
       }
     }
-  }
+  },
+  "submitted_by": "skywalk1411"
 }
